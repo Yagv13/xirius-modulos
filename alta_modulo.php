@@ -11,10 +11,9 @@
     <?php include_once 'header.php'; ?>
 
     <div class="container" style="max-width: 700px;">
-        
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="modulos.php" class="text-decoration-none text-info">Inicio</a></li>
+                <li class="breadcrumb-item"><a href="modulos.php" class="text-decoration-none text-warning" style="color: #ef7715 !important;">Inicio</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Nuevo Módulo</li>
             </ol>
         </nav>
@@ -23,7 +22,10 @@
             <div class="card-body p-4">
                 <h4 class="card-title fw-bold text-dark mb-4">Registrar Nuevo Módulo</h4>
                 
-                <form action="procesar_modulo.php" method="POST">
+                <form action="crud_modulo.php" method="POST">
+                    
+                    <input type="hidden" name="accion" value="guardar">
+
                     <div class="mb-3">
                         <label for="nombre" class="form-label fw-semibold text-secondary">Nombre del Módulo</label>
                         <input type="text" class="form-control form-control-lg fs-6" id="nombre" name="nombre" placeholder="Ej. Filtro de Candidatos AI" required>
@@ -35,7 +37,7 @@
                     
                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                         <a href="modulos.php" class="text-decoration-none text-muted fw-medium">← Volver al listado</a>
-                        <button type="submit" class="btn btn-dark px-4 py-2 fw-medium rounded-2">Guardar Módulo</button>
+                        <button type="submit" class="btn btn-dark px-4 py-2 fw-medium rounded-2" style="background-color: #2b3035;">Guardar Módulo</button>
                     </div>
                 </form>
             </div>
