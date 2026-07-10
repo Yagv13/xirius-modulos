@@ -6,7 +6,9 @@
         </a>
         
         <div class="navbar-nav ms-auto">
-            <a class="nav-link btn btn-outline-warning text-white px-3" href="alta_modulo.php" style="border-color: #fd7e14; --bs-btn-hover-bg: #fd7e14;">+ Nuevo Módulo</a>
+            <button class="btn btn-outline-warning text-white px-3" data-bs-toggle="modal" data-bs-target="#modalModulo" id="btnHeaderNuevo" style="border-color: #fd7e14; --bs-btn-hover-bg: #fd7e14;">
+                + Nuevo Módulo
+            </button>
         </div>
     </div>
 </nav>

@@ -8,7 +8,7 @@ require_once 'db.php';
 
 function obtenerModulos (){
     global $conn;
-    $query="SELECT*FROM modulos ORDER BY fecha_creacion DESC";
+    $query="SELECT*FROM modulos ORDER BY fecha_creacion ASC";
     return $conn->query($query);
 }
 
