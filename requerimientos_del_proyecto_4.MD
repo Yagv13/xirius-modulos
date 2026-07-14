@@ -8,9 +8,9 @@ Xirius - Administración de Módulos
 
 ## Objetivo General
 
-Modernizar la comunicación entre el Frontend y el Backend eliminando el envío tradicional de formularios mediante el atributo **action**.
+Modernizar la comunicación entre el Frontend y el Backend eliminando el envío tradicional de formularios mediante el atributo action.
 
-A partir de esta fase todas las operaciones CRUD deberán realizarse utilizando **JavaScript**, el método **Fetch API** y respuestas en formato **JSON**.
+A partir de esta fase todas las operaciones CRUD deberán realizarse utilizando JavaScript, el método Fetch API y respuestas en formato JSON.
 
 El objetivo principal será comprender cómo se comunican actualmente la mayoría de las aplicaciones web modernas.
 
