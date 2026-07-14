@@ -1,13 +1,9 @@
-<?php 
-require_once 'crud_modulo.php';
-$resultado=obtenerModulos();
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xirius - Módulos</title>
+    <title>Xirius - Módulos (Fetch API)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -15,35 +11,7 @@ $resultado=obtenerModulos();
     <?php include_once 'header.php'; ?>
 
     <div class="container">
-        
-        <?php if (isset($_GET['success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-                ¡Módulo registrado exitosamente!
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (isset($_GET['updated'])): ?>
-            <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
-                ¡Módulo actualizado correctamente!
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (isset($_GET['deleted'])): ?>
-            <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
-                El módulo fue eliminado del sistema.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (isset($_GET['error']) && $_GET['error'] === 'duplicado'): ?>
-            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
-                <strong>Error:</strong> Ya existe un módulo registrado con ese mismo nombre.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
+        <div id="alertContainer"></div>
         <div class="card shadow border-0 rounded-3">
             <div class="card-header bg-white py-3 border-bottom border-light d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0 fw-bold text-secondary">Lista de Servicios Habilitados</h5>
@@ -60,35 +28,10 @@ $resultado=obtenerModulos();
                                 <th class="text-end pe-4" style="width: 200px;">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php if ($resultado && $resultado->num_rows > 0): ?>
-                                <?php while($row = $resultado->fetch_assoc()): ?>
-                                    <tr>
-                                        <td class="ps-4 text-muted fw-bold">#<?php echo $row['id']; ?></td>
-                                        <td><span class="text-dark fw-semibold fs-6"><?php echo htmlspecialchars($row['nombre']); ?></span></td>
-                                        <td class="text-muted text-truncate" style="max-width: 300px;"><?php echo htmlspecialchars($row['descripcion']); ?></td>
-                                        <td class="text-muted fs-7"><?php echo date('d M, Y H:i', strtotime($row['fecha_creacion'])); ?></td>
-                                        <td class="text-end pe-4">
-                                            <button 
-                                                class="btn btn-sm btn-light border text-warning fw-medium me-1 btn-editar"
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#modalModulo"
-                                                data-id="<?php echo $row['id']; ?>"
-                                                data-nombre="<?php echo htmlspecialchars($row['nombre']); ?>"
-                                                data-descripcion="<?php echo htmlspecialchars($row['descripcion']); ?>"
-                                            >
-                                                Editar
-                                            </button>
-
-                                            <a href="crud_modulo.php?accion=eliminar&id=<?php echo $row['id']; ?>" class="btn btn-sm btn-danger opacity-75" onclick="return confirm('¿Seguro que deseas eliminar este módulo?')">Eliminar</a>
-                                        </td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            <?php else: ?>
-                                <tr>
-                                    <td colspan="5" class="text-center py-5 text-muted">No hay módulos registrados en la plataforma.</td>
-                                </tr>
-                            <?php endif; ?>
+                        <tbody id="tablaModulosBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Cargando módulos...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -103,9 +46,8 @@ $resultado=obtenerModulos();
                     <h5 class="modal-title fw-bold" id="modalModuloLabel">Registrar Nuevo Módulo</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form action="crud_modulo.php" method="POST" id="formModulo">
+                <form id="formModulo">
                     <div class="modal-body p-4">
-                        
                         <input type="hidden" name="accion" value="guardar">
                         <input type="hidden" name="id" id="modulo_id" value="">
 
@@ -131,43 +73,167 @@ $resultado=obtenerModulos();
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const modalTitulo = document.getElementById('modalModuloLabel');
+            const tablaBody = document.getElementById('tablaModulosBody');
+            const alertContainer = document.getElementById('alertContainer');
             const formModulo = document.getElementById('formModulo');
+            const modalModuloElement = document.getElementById('modalModulo');
+            const modalInstance = new bootstrap.Modal(modalModuloElement);
+            const modalTitulo = document.getElementById('modalModuloLabel');
             const inputId = document.getElementById('modulo_id');
-            const inputNombre = document.getElementById('nombre');
-            const inputDescripcion = document.getElementById('descripcion');
-            
             const btnNuevo = document.getElementById('btnNuevoModulo') || document.getElementById('btnHeaderNuevo');
+
+            cargarModulos();
+
+            function mostrarAlerta(mensaje, tipo = 'success') {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-${tipo} alert-dismissible fade show shadow-sm" role="alert">
+                        ${mensaje}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+            }
+
+            async function cargarModulos() {
+                try {
+                    const response = await fetch('crud_modulo.php?accion=listar');
+                    const result = await response.json();
+
+                    if (result.success) {
+                        renderizarTabla(result.data);
+                    } else {
+                        mostrarAlerta(result.message, 'danger');
+                    }
+                } catch (error) {
+                    mostrarAlerta('Error de conexión al obtener los módulos.', 'danger');
+                    console.error(error);
+                }
+            }
+
+            function renderizarTabla(modulos) {
+                if (modulos.length === 0) {
+                    tablaBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">No hay módulos registrados en la plataforma.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tablaBody.innerHTML = modulos.map(m => `
+                    <tr>
+                        <td class="ps-4 text-muted fw-bold">#${m.id}</td>
+                        <td><span class="text-dark fw-semibold fs-6">${escapeHtml(m.nombre)}</span></td>
+                        <td class="text-muted text-truncate" style="max-width: 300px;">${escapeHtml(m.descripcion)}</td>
+                        <td class="text-muted fs-7">${m.fecha_creacion}</td>
+                        <td class="text-end pe-4">
+                            <button 
+                                class="btn btn-sm btn-light border text-warning fw-medium me-1 btn-editar"
+                                data-id="${m.id}"
+                                data-nombre="${escapeHtml(m.nombre)}"
+                                data-descripcion="${escapeHtml(m.descripcion)}"
+                            >
+                                Editar
+                            </button>
+                            <button 
+                                class="btn btn-sm btn-danger opacity-75 btn-eliminar"
+                                data-id="${m.id}"
+                            >
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                asignarEventosTabla();
+            }
+
+            function asignarEventosTabla() {
+                document.querySelectorAll('.btn-editar').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        modalTitulo.textContent = 'Editar Módulo';
+                        inputId.value = btn.dataset.id;
+                        document.getElementById('nombre').value = btn.dataset.nombre;
+                        document.getElementById('descripcion').value = btn.dataset.descripcion;
+                        modalInstance.show();
+                    });
+                });
+
+                document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        if (confirm('¿Seguro que deseas eliminar este módulo?')) {
+                            const id = btn.dataset.id;
+                            const formData = new FormData();
+                            formData.append('accion', 'eliminar');
+                            formData.append('id', id);
+
+                            try {
+                                const response = await fetch('crud_modulo.php', {
+                                    method: 'POST',
+                                    body: formData
+                                });
+                                const result = await response.json();
+
+                                if (result.success) {
+                                    mostrarAlerta(result.message, 'warning');
+                                    cargarModulos(); 
+                                } else {
+                                    mostrarAlerta(result.message, 'danger');
+                                }
+                            } catch (error) {
+                                mostrarAlerta('Error al procesar la eliminación.', 'danger');
+                            }
+                        }
+                    });
+                });
+            }
+
+            formModulo.addEventListener('submit', async (e) => {
+                e.preventDefault(); 
+
+                const formData = new FormData(formModulo);
+
+                try {
+                    const response = await fetch('crud_modulo.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+
+                    modalInstance.hide();
+
+                    if (result.success) {
+                        formModulo.reset(); 
+                        mostrarAlerta(result.message, 'success');
+                        cargarModulos(); 
+                    } else {
+                        mostrarAlerta(result.message, 'danger');
+                    }
+                } catch (error) {
+                    modalInstance.hide();
+                    mostrarAlerta('Ocurrió un error inesperado en la comunicación con el servidor.', 'danger');
+                }
+            });
+
 
             if (btnNuevo) {
                 btnNuevo.addEventListener('click', () => {
                     modalTitulo.textContent = 'Registrar Nuevo Módulo';
-                    inputId.value = ''; 
+                    inputId.value = '';
                     formModulo.reset();
                 });
             }
 
-            const botonesEditar = document.querySelectorAll('.btn-editar');
-            
-            botonesEditar.forEach(boton => {
-                boton.addEventListener('click', () => {
-                    modalTitulo.textContent = 'Editar Módulo';
-
-                    const id = boton.dataset.id;
-                    const nombre = boton.dataset.nombre;
-                    const descripcion = boton.dataset.descripcion;
-
-                    inputId.value = id;
-                    inputNombre.value = nombre;
-                    inputDescripcion.value = descripcion;
-                });
-            });
+            function escapeHtml(text) {
+                if (!text) return '';
+                return text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
         });
-    </script>
-    <script>
-        if (window.history.replaceState) {
-            window.history.replaceState(null, null, window.location.pathname);
-        }
+        
     </script>
 </body>
 </html>
